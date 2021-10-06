@@ -1,6 +1,0 @@
-type ToDoModel @model @auth(rules: [{allow: public}]) {
-  id: ID!
-  title: String
-  isComplete: Boolean
-  dueDt: AWSDate
-}

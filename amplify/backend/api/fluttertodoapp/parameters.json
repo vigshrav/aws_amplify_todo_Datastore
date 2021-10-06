@@ -1,5 +1,5 @@
 {
-  "AppSyncApiName": "trialapp",
+  "AppSyncApiName": "fluttertodoapp",
   "DynamoDBBillingMode": "PAY_PER_REQUEST",
   "DynamoDBEnableServerSideEncryption": false
 }

@@ -6,7 +6,7 @@ import 'package:amplify_flutter/amplify.dart';
 import 'package:aws_amplify_todo/DB.dart';
 import 'package:aws_amplify_todo/amplifyconfiguration.dart';
 import 'package:aws_amplify_todo/models/ModelProvider.dart';
-import 'package:aws_amplify_todo/models/ToDoModel.dart';
+import 'package:aws_amplify_todo/models/ToDoList.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,12 +16,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
-  StreamSubscription _subscription;
+  late StreamSubscription _subscription;
   List _todos = [];
-  String _todoTitle;
+  String _todoTitle = '';
   String errTXT = '';
   final fieldText = TextEditingController();
-  FocusNode focusnode;
+  late FocusNode focusnode;
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _initializeApp() async {
     await _configureAmplify();
-    _subscription = Amplify.DataStore.observe(ToDoModel.classType).listen((event) {
+    _subscription = Amplify.DataStore.observe(ToDoList.classType).listen((event) {
       _fetchTodos();
     });
     await _fetchTodos();
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _fetchTodos() async {
 
-    List<ToDoModel> _todofromDB = await DBServices().fetchAllToDo();
+    List<ToDoList> _todofromDB = await DBServices().fetchAllToDo();
     setState(() {
       _todos = _todofromDB;
     });
@@ -65,6 +65,8 @@ class _HomePageState extends State<HomePage> {
   final AmplifyDataStore _dataStorePlugin =
     AmplifyDataStore(modelProvider: ModelProvider.instance);
   final AmplifyAPI _apiPlugin = AmplifyAPI();
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -87,55 +89,51 @@ class _HomePageState extends State<HomePage> {
           children: [
             //Center(child: Text('No ToDo Items to show')),
             Padding(padding:EdgeInsets.all(8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: fieldText,
-                    focusNode: focusnode,
-                    cursorColor: Colors.orange,
-                    decoration: InputDecoration(
-                      labelText: 'ADD NEW TO-DO',
-                      labelStyle: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
-                      
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0),),
-                        borderSide: BorderSide(color: Colors.grey)
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: fieldText,
+                      focusNode: focusnode,
+                      cursorColor: Colors.orange,
+                      decoration: InputDecoration(
+                        labelText: 'ADD NEW TO-DO',
+                        labelStyle: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(25.0),),
+                          borderSide: BorderSide(color: Colors.grey)
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(25.0),),
+                          borderSide: BorderSide(width: 2.0, color: Colors.orange)
+                        ),
+                        suffixIcon: IconButton(
+                          color: Colors.orange,
+                          icon: Icon(Icons.add),
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()){
+                              await saveTodo(_todoTitle);
+                              setState(() {
+                                _todoTitle = '';
+                              });
+                              fieldText.clear();
+                              FocusScope.of(context).unfocus();                            
+                            }
+                          },
+                        ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0),),
-                        borderSide: BorderSide(width: 2.0, color: Colors.orange)
-                      ),
-                      suffixIcon: IconButton(
-                        color: Colors.orange,
-                        icon: Icon(Icons.add),
-                        onPressed: () async {
-                          if (_todoTitle == null){
-                            setState(() {
-                              errTXT = 'Please add a title!';
-                            });
-                          } else {
-                            setState(() {
-                              errTXT = '';
-                            });
-                            await saveTodo(_todoTitle);
-                            setState(() {
-                              _todoTitle = null;
-                            });
-                            fieldText.clear();
-                            FocusScope.of(context).unfocus();                            
-                          }
-                        },
-                      ),
+                      maxLength: 20,
+                      keyboardType: TextInputType.text,
+                      onChanged: (val) {
+                        setState(() => _todoTitle = val);
+                      },
+                      validator: (val) => val!.isEmpty ? 'Input required!' : null,
                     ),
-                    maxLength: 20,
-                    keyboardType: TextInputType.text,
-                    onChanged: (val) {
-                      setState(() => _todoTitle = val);
-                    }
-                  ),
-                  Text(errTXT, style: TextStyle(color: Colors.red),),
-                ],
+                    Text(errTXT, style: TextStyle(color: Colors.red),),
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -146,7 +144,7 @@ class _HomePageState extends State<HomePage> {
                   return ListTile(
                     //leading: IconButton(icon: Icon(Icons.clear), onPressed: () {},),
                     title: Text('${_todos[index].title}', style: _textStyle(_todos[index].isComplete),),
-                    trailing: Checkbox(value: _todos[index].isComplete, onChanged: (bool newVal) => DBServices().updateToDo(_todos[index], newVal),),
+                    trailing: Checkbox(value: _todos[index].isComplete, onChanged: (bool? newVal) => DBServices().updateToDo(_todos[index], newVal!),),
                   );
                 },
               ),

@@ -1,19 +1,19 @@
 import 'package:amplify_flutter/amplify.dart';
-import 'package:aws_amplify_todo/models/ToDoModel.dart';
+import 'package:aws_amplify_todo/models/ToDoList.dart';
 
 class DBServices {
 
   Future fetchAllToDo() async {
     try {
-    List<ToDoModel> todoList = await Amplify.DataStore.query(ToDoModel.classType);
+    List<ToDoList> todoList = await Amplify.DataStore.query(ToDoList.classType);
     return todoList;
     } catch (e) {
-    print("Could not query DataStore: " + e);
+    print("Could not query DataStore: " + e.toString());
     }
   }
 
   Future createToDo(title) async {
-    final item = ToDoModel(
+    final item = ToDoList(
       title: title,
       isComplete: false,
       //dueDt: TemporalDate(DateTime.now())
@@ -21,7 +21,7 @@ class DBServices {
     await Amplify.DataStore.save(item);
   }
 
-  Future updateToDo(ToDoModel todo, bool isComplete) async {
+  Future updateToDo(ToDoList todo, bool isComplete) async {
     final updateToDo = todo.copyWith(
       isComplete: isComplete,
       //dueDt: TemporalDate.fromString(dueDt)
@@ -29,7 +29,7 @@ class DBServices {
     await Amplify.DataStore.save(updateToDo);
   }
 
-  Future deleteToDo(ToDoModel todo) async {
+  Future deleteToDo(ToDoList todo) async {
     await Amplify.DataStore.delete(todo);
   }
 

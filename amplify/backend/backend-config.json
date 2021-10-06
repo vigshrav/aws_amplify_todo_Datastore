@@ -1,6 +1,6 @@
 {
   "api": {
-    "trialapp": {
+    "fluttertodoapp": {
       "service": "AppSync",
       "providerPlugin": "awscloudformation",
       "output": {
