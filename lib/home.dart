@@ -5,6 +5,7 @@ import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify.dart';
 import 'package:aws_amplify_todo/DB.dart';
 import 'package:aws_amplify_todo/amplifyconfiguration.dart';
+import 'package:aws_amplify_todo/auth/auth.dart';
 import 'package:aws_amplify_todo/models/ModelProvider.dart';
 import 'package:aws_amplify_todo/models/ToDoList.dart';
 import 'package:flutter/material.dart';
@@ -39,18 +40,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _initializeApp() async {
-    await _configureAmplify();
     _subscription = Amplify.DataStore.observe(ToDoList.classType).listen((event) {
       _fetchTodos();
     });
     await _fetchTodos();
-  }
-
-  Future<void> _configureAmplify() async {
-    try{
-      await Amplify.addPlugins([_dataStorePlugin, _apiPlugin]);
-      await Amplify.configure(amplifyconfig);
-    } catch (e) {print (e);}
   }
 
   Future<void> _fetchTodos() async {
@@ -59,12 +52,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _todos = _todofromDB;
     });
-
   }
-
-  final AmplifyDataStore _dataStorePlugin =
-    AmplifyDataStore(modelProvider: ModelProvider.instance);
-  final AmplifyAPI _apiPlugin = AmplifyAPI();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -79,15 +67,17 @@ class _HomePageState extends State<HomePage> {
       
       appBar: AppBar(
         title: Text('ToDo List'),
-        backgroundColor: Colors.orange,
-        ),
+        actions: [
+          IconButton(icon: Icon(Icons.person), onPressed: () async {
+            AuthServices().signOut(context);
+          },)
+        ],
+      ),
 
       body: Container(
         child: Column(
-          //mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.max,
           children: [
-            //Center(child: Text('No ToDo Items to show')),
             Padding(padding:EdgeInsets.all(8),
               child: Form(
                 key: _formKey,
